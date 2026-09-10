@@ -185,7 +185,7 @@
           We built March-only features and an April decline label (&gt;20% drop in daily impressions) for 116,539 content items across 40 pseudonymized clients, drawn from the FlyRank ML Internship warehouse's 79-million-row release, and validated with 5-fold cross-validation grouped by client so no model could partly memorize a client's template instead of learning a transferable pattern.
           We compared a hand-written baseline rule against logistic regression and a Random Forest on the identical split.
           All three methods clearly separated risk from the panel's 50.4% base rate, but the honest result is more mixed than a single headline number: logistic regression led at the tightest cutoffs, and the Random Forest — the model the earlier project write-up named as the final choice — essentially tied the baseline rather than clearly beating it, a result we report as measured rather than smoothing it into a bigger win.
-          The output is not an automated decision: it is a ranked review queue with four descriptive risk tiers, meant to sit in front of a content strategist with a fixed review budget, alongside explicit limits on what a five-week, single-release pattern can and cannot claim.
+          The output is not an automated decision: it mirrors the same gap FlyRank's own production content flags already work in — a ranked review queue with four descriptive risk tiers, sitting in front of a content strategist with a fixed review budget, alongside explicit limits on what a five-week, single-release pattern can and cannot claim.
         </p>
       </div>
     </section>
@@ -201,6 +201,14 @@
       </p>
       <p>
         The cost of a wrong call runs both ways. A false positive burns a limited review slot on a page that was fine. A false negative lets a real decline go unnoticed until it is more expensive to reverse. Both costs are treated as real throughout this paper, which is why the results below are reported as a ranking signal for a human queue, not as a verdict on any one page.
+      </p>
+
+      <h3>The case study behind the question</h3>
+      <p>
+        FlyRank builds content as infrastructure: it researches, writes, and publishes content directly into a client's site, then watches search performance and optimizes — the full cycle, largely automated rather than done by hand. The problem that creates is the one this paper works on. Content that ranks in search quietly decays over time, and across a portfolio of thousands of live pages, most teams notice the drop only after it has already gotten expensive to reverse. The valuable decision was never "did this page decline" — it's <em>which page, out of thousands, does a human fix first.</em>
+      </p>
+      <p>
+        FlyRank already answers a version of that question in production, with hand-written flags: a health score, quick-win tags, needs-attention tags — if-this-then-that rules with hand-chosen thresholds. They work, and they run today. But rules like these run out precisely where signals get numerous, tangled, and still shifting month to month — the gap a trained model is supposed to close. This capstone's hand-written baseline (Section 4) is built in that same spirit on purpose, so the question this paper answers is the direct, practical one: on real production search data, does a learned model actually close that gap, or does the existing kind of rule hold its own? Section 5's honest answer is closer to the latter than a clean model win.
       </p>
     </section>
 
