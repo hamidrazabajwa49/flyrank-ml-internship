@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Can March Search Signals Flag April Decline? — FlyRank ML Internship Capstone</title>
+<meta name="description" content="A client-grouped test of whether pre-decision content signals can flag search-decline risk, on 116,539 pages from a 79M-row production search dataset.">
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;0,6..72,700;1,6..72,400;1,6..72,500&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f1efe6;
+    --paper-raised:#faf9f4;
+    --ink:#1c1e22;
+    --ink-soft:#4b4f57;
+    --ink-faint:#7a7e86;
+    --rule:#cdc6b3;
+    --rule-strong:#1c1e22;
+    --amber:#a5680d;
+    --amber-bg:#f4e6c8;
+    --slate:#28415a;
+    --slate-bg:#e4e9ee;
+    --green:#3c5f3f;
+    --green-bg:#e2ebe0;
+    --max:700px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;background:var(--paper);color:var(--ink);
+    font-family:'Newsreader',Georgia,'Times New Roman',serif;
+    font-size:18px;line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{background:var(--amber-bg)}
+  a{color:var(--slate)}
+  a:hover{color:var(--amber)}
+  code,.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
+
+  .wrap{max-width:var(--max);margin:0 auto;padding:0 24px}
+
+  /* ── masthead ── */
+  header.masthead{border-bottom:3px solid var(--rule-strong);padding:52px 0 26px;background:var(--paper)}
+  .kicker{font:600 13px/1 'JetBrains Mono',monospace;letter-spacing:.02em;color:var(--ink-faint);margin:0 0 18px}
+  h1.title{font:600 40px/1.16 'Newsreader',serif;margin:0 0 16px;letter-spacing:-.01em;font-size:clamp(27px,6vw,40px)}
+  .byline{font:16px/1.5 'Newsreader',serif;color:var(--ink-soft);margin:0 0 4px}
+  .byline b{color:var(--ink);font-weight:600}
+  .meta-row{margin-top:16px;font:14px/1.6 'JetBrains Mono',monospace;color:var(--ink-faint)}
+  .meta-row a{color:var(--slate);text-decoration:none;border-bottom:1px solid var(--rule)}
+  .meta-row a:hover{border-color:var(--amber)}
+
+  /* ── table of contents, styled as a ranked result list ── */
+  nav.toc{padding:26px 0 6px;border-bottom:1px solid var(--rule)}
+  nav.toc ol{list-style:none;margin:0;padding:0}
+  nav.toc li{display:flex;gap:16px;align-items:baseline;padding:9px 0;border-top:1px solid var(--rule)}
+  nav.toc li:first-child{border-top:none}
+  .toc-rank{font:600 15px 'JetBrains Mono',monospace;color:var(--amber);width:1.6em;flex:none;text-align:right}
+  nav.toc a{text-decoration:none;color:var(--ink);font-weight:500}
+  nav.toc a:hover{color:var(--amber)}
+  .toc-desc{color:var(--ink-faint);font:15px/1.4 'Newsreader',serif;font-style:italic}
+
+  /* ── sections ── */
+  main{padding:8px 0 20px}
+  section{padding:46px 0;border-bottom:1px solid var(--rule)}
+  section:last-of-type{border-bottom:none}
+  .sec-num{font:600 13px 'JetBrains Mono',monospace;color:var(--amber);letter-spacing:.02em;margin:0 0 8px}
+  h2{font:600 27px/1.28 'Newsreader',serif;margin:0 0 18px;letter-spacing:-.005em}
+  h3{font:600 19px/1.3 'Newsreader',serif;margin:26px 0 10px}
+  p{margin:0 0 15px}
+  section > p:last-child{margin-bottom:0}
+  ul,ol.body-list{margin:0 0 15px;padding-left:24px}
+  li{margin-bottom:9px}
+  strong{font-weight:600}
+  em{font-style:italic}
+
+  /* abstract callout */
+  .abstract{background:var(--paper-raised);border:1px solid var(--rule);border-left:4px solid var(--amber);
+    padding:24px 26px;font-size:17.5px}
+  .abstract p{margin:0}
+
+  /* definition-style key/value blocks (data & methodology) */
+  dl.spec{margin:0 0 18px}
+  dl.spec dt{font:600 14px 'JetBrains Mono',monospace;color:var(--slate);margin:16px 0 5px}
+  dl.spec dt:first-child{margin-top:0}
+  dl.spec dd{margin:0 0 0 0;color:var(--ink)}
+
+  code.field{background:var(--slate-bg);color:var(--slate);padding:1px 6px;border-radius:3px;font-size:15px}
+
+  /* tables */
+  table{width:100%;border-collapse:collapse;font:15px/1.5 'JetBrains Mono',monospace;margin:18px 0}
+  caption{caption-side:top;text-align:left;font:15px/1.5 'Newsreader',serif;font-style:italic;
+    color:var(--ink-soft);padding-bottom:10px}
+  th{border-top:2px solid var(--ink);border-bottom:1px solid var(--ink);text-align:left;
+    padding:8px 10px;font-weight:600;font-size:13px;letter-spacing:.01em}
+  td{border-bottom:1px solid var(--rule);padding:8px 10px;vertical-align:top}
+  tbody tr:last-child td{border-bottom:2px solid var(--ink)}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+  tr.lead td{background:var(--amber-bg)}
+
+  .pill{display:inline-block;font:600 12px/1 'JetBrains Mono',monospace;padding:4px 8px;border-radius:3px;
+    letter-spacing:.01em}
+  .pill-act{background:var(--amber-bg);color:#7a4c0a}
+  .pill-queue{background:var(--slate-bg);color:var(--slate)}
+  .pill-watch{background:#efe9d8;color:#6b5b1f}
+  .pill-skip{background:#e9e7df;color:var(--ink-faint)}
+
+  /* figures */
+  figure{margin:24px 0;padding:18px 18px 8px;background:var(--paper-raised);border:1px solid var(--rule)}
+  figure img{width:100%;height:auto;display:block;background:#fff}
+  figcaption{font:14.5px/1.55 'Newsreader',serif;color:var(--ink-soft);padding:12px 2px 4px;font-style:italic}
+
+  .takeaway{font:15px/1.5 'JetBrains Mono',monospace;background:var(--slate-bg);color:var(--slate);
+    padding:10px 14px;margin:14px 0 0;border-left:3px solid var(--slate)}
+
+  .callout{border:1px solid var(--rule);border-left:4px solid var(--ink-faint);padding:16px 20px;
+    background:var(--paper-raised);margin:16px 0;font-size:16.5px}
+  .callout p:last-child{margin-bottom:0}
+  .callout .label{font:600 12px 'JetBrains Mono',monospace;letter-spacing:.03em;color:var(--ink-faint);
+    display:block;margin-bottom:8px}
+
+  /* repro grid */
+  .repro-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 24px;margin:18px 0}
+  .repro-grid dt{font:600 13px 'JetBrains Mono',monospace;color:var(--ink-faint);margin-bottom:4px}
+  .repro-grid dd{margin:0;font-size:16px}
+
+  /* acknowledgments / footer */
+  .ack{background:var(--paper-raised)}
+  .ack a.credit{display:inline-flex;align-items:center;gap:10px;margin-top:10px;padding:12px 18px;
+    background:var(--ink);color:var(--paper);text-decoration:none;font:15px/1 'JetBrains Mono',monospace}
+  .ack a.credit:hover{background:var(--amber);color:#231400}
+
+  footer{padding:30px 0 60px;color:var(--ink-faint);font:14px/1.6 'JetBrains Mono',monospace}
+  footer a{color:var(--ink-faint)}
+
+  @media (max-width:560px){
+    body{font-size:16.5px}
+    .repro-grid{grid-template-columns:1fr}
+    section{padding:34px 0}
+    table{font-size:13.5px}
+  }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap">
+    <p class="kicker">flyrank ml internship — capstone research paper</p>
+    <h1 class="title">Can March search signals flag which pages decline in April?</h1>
+    <p class="byline">A client-grouped test of a decline-risk classifier against a hand-written baseline, run on <b>116,539</b> content items across <b>40</b> pseudonymized clients from a 79-million-row production search release.</p>
+    <p class="meta-row">
+      September 2026 &nbsp;/&nbsp;
+      <a href="https://github.com/hamidrazabajwa49/flyrank-ml-internship">repo</a> &nbsp;/&nbsp;
+      <a href="https://github.com/hamidrazabajwa49/flyrank-ml-internship/blob/main/work/notebooks/capstone.ipynb">notebook</a> &nbsp;/&nbsp;
+      data: <a href="https://flyrank.ai">flyrank.ai</a>
+    </p>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="wrap">
+    <ol>
+      <li><span class="toc-rank">1</span><a href="#abstract">Abstract</a> <span class="toc-desc">— the five-sentence version</span></li>
+      <li><span class="toc-rank">2</span><a href="#introduction">Introduction</a> <span class="toc-desc">— the decision this supports</span></li>
+      <li><span class="toc-rank">3</span><a href="#data">Data</a> <span class="toc-desc">— release, tables, windows, exclusions</span></li>
+      <li><span class="toc-rank">4</span><a href="#methodology">Methodology</a> <span class="toc-desc">— label, features, split, leakage checks</span></li>
+      <li><span class="toc-rank">5</span><a href="#results">Results</a> <span class="toc-desc">— model vs. baseline, same split</span></li>
+      <li><span class="toc-rank">6</span><a href="#limitations">Limitations</a> <span class="toc-desc">— what this can't claim</span></li>
+      <li><span class="toc-rank">7</span><a href="#recommendations">Ranked recommendations</a> <span class="toc-desc">— the action playbook</span></li>
+      <li><span class="toc-rank">8</span><a href="#reproducibility">Reproducibility</a> <span class="toc-desc">— rerun it yourself</span></li>
+      <li><span class="toc-rank">9</span><a href="#acknowledgments">Acknowledgments</a> <span class="toc-desc">— data credit</span></li>
+    </ol>
+  </div>
+</nav>
+
+<main>
+  <div class="wrap">
+
+    <section id="abstract">
+      <p class="sec-num">01 — abstract</p>
+      <div class="abstract">
+        <p>
+          Using only content and context signals a page carries by the end of March 2026 — before any engagement trend shows up as "down" — can we flag which pages are at elevated risk of an April impression decline?
+          We built March-only features and an April decline label (&gt;20% drop in daily impressions) for 116,539 content items across 40 pseudonymized clients, drawn from the FlyRank ML Internship warehouse's 79-million-row release, and validated with 5-fold cross-validation grouped by client so no model could partly memorize a client's template instead of learning a transferable pattern.
+          We compared a hand-written baseline rule against logistic regression and a Random Forest on the identical split.
+          All three methods clearly separated risk from the panel's 50.4% base rate, but the honest result is more mixed than a single headline number: logistic regression led at the tightest cutoffs, and the Random Forest — the model the earlier project write-up named as the final choice — essentially tied the baseline rather than clearly beating it, a result we report as measured rather than smoothing it into a bigger win.
+          The output is not an automated decision: it is a ranked review queue with four descriptive risk tiers, meant to sit in front of a content strategist with a fixed review budget, alongside explicit limits on what a five-week, single-release pattern can and cannot claim.
+        </p>
+      </div>
+    </section>
+
+    <section id="introduction">
+      <p class="sec-num">02 — introduction</p>
+      <h2>The decision, not just the model</h2>
+      <p>
+        This is a <strong>decline-risk classification</strong> task: using only content and context attributes that exist independently of a page's engagement trend, can we flag which currently non-declining pages are at elevated risk of falling into decline before it shows up in the numbers?
+      </p>
+      <p>
+        The decision this supports is narrow and deliberately so. It is whether a page gets added to a content strategist's periodic — roughly monthly — review queue, inside a fixed review budget, ahead of becoming a reactive emergency refresh. It is not a decision about any single page in isolation, and it is not an automated action of any kind.
+      </p>
+      <p>
+        The cost of a wrong call runs both ways. A false positive burns a limited review slot on a page that was fine. A false negative lets a real decline go unnoticed until it is more expensive to reverse. Both costs are treated as real throughout this paper, which is why the results below are reported as a ranking signal for a human queue, not as a verdict on any one page.
+      </p>
+    </section>
+
+    <section id="data">
+      <p class="sec-num">03 — data</p>
+      <h2>Release, tables, windows</h2>
+      <dl class="spec">
+        <dt>release</dt>
+        <dd>The pseudonymized, safe warehouse release <code class="field">FlyRank/internship-warehouse</code> on Hugging Face (~79M rows, ~70 clients), read directly off Parquet via DuckDB — never downloaded whole.</dd>
+
+        <dt>tables used</dt>
+        <dd><code class="field">fact_content_daily_performance</code> (partitions <code class="field">month=2026-03</code> and <code class="field">month=2026-04</code>) and <code class="field">dim_content</code> (content type, last-updated date).</dd>
+
+        <dt>date windows</dt>
+        <dd>Features come from March 2026 only; the label comes from April 2026 only, with no overlap between the two. March was used as a mid-panel month by design — the release's final month is a sealed test window that was never touched while developing label logic.</dd>
+      </dl>
+
+      <h3>Excluded, and why</h3>
+      <ul>
+        <li><strong>GA4-derived columns</strong> where tracking wasn't yet active for a client — those are zero-filled before a client's tracking start, so a zero there means "not tracked," not "no engagement."</li>
+        <li><strong>The 90-day query table</strong> — its fixed window sits close to the release's final months, so it can't be safely aligned to an earlier mid-panel label without a dedicated alignment check we didn't have time to run.</li>
+        <li><strong>Raw client, content, and URL hash IDs as model inputs</strong> — these are join keys only. Using them as features would mean memorizing an identity, not learning a content pattern.</li>
+        <li><strong>No client names, brand names, URLs, or raw queries</strong> appear anywhere in this paper or its underlying notebook — every identifier below is the pseudonymous hash the release ships with.</li>
+      </ul>
+      <div class="callout">
+        <span class="label">resulting sample</span>
+        <p><strong>116,539</strong> content items across <strong>40</strong> clients survived a minimum-activity filter (≥15 days of March data, ≥30 March impressions), with a decline base rate of <strong>50.4%</strong>.</p>
+      </div>
+    </section>
+
+    <section id="methodology">
+      <p class="sec-num">04 — methodology</p>
+      <h2>Label, features, baseline, validation</h2>
+
+      <dl class="spec">
+        <dt>label</dt>
+        <dd><code class="field">is_down</code> = 1 if a page's April daily impressions fell more than 20% versus March, else 0 — built from raw facts, not a column the release ships pre-computed.</dd>
+
+        <dt>features (5 numeric + content-type one-hot, all knowable by 2026-03-31)</dt>
+        <dd>prior-month volume (log daily impressions), average position, click-through rate, within-March momentum (second half vs. first half), and staleness (days since last content update).</dd>
+
+        <dt>baseline</dt>
+        <dd><code class="field">score = max(0, −momentum) × log1p(daily impressions)</code> — thresholds were fixed before evaluation, not tuned against the metric.</dd>
+
+        <dt>model</dt>
+        <dd>A Random Forest was the model named as the final choice after being compared against logistic regression on identical data. As Section 5 shows, that choice does not hold up cleanly against the honest comparison — we report both.</dd>
+
+        <dt>validation design</dt>
+        <dd><code class="field">GroupKFold(5)</code> on the pseudonymous client ID. The label is already time-separated at the row level (March features, April label); the remaining leak risk sits across <em>client</em> — pages from the same client share a template and a niche, so a random split would let a model partly memorize a client instead of learning a generalizable pattern. An earlier audit in this project confirmed that risk was real: a naive random split scored measurably higher than the grouped split on the same data.</dd>
+
+        <dt>leakage checks</dt>
+        <dd>No feature name matched a label-derived pattern; no feature correlated with the label above 0.90 (max observed |r| = 0.252); the baseline score rebuilds exactly from March-only columns; no April column reaches the exported review queue.</dd>
+      </dl>
+    </section>
+
+    <section id="results">
+      <p class="sec-num">05 — results</p>
+      <h2>Model vs. baseline, same split</h2>
+      <p>
+        All numbers below come from the same 5-fold, client-grouped cross-validation — mean precision@K across the five held-out folds, with the panel's base rate (0.505 across folds) marked for scale.
+      </p>
+
+      <table>
+        <caption>Table 1 — precision@K by method, 5-fold grouped CV (mean, base rate 0.505)</caption>
+        <thead>
+          <tr><th>method</th><th class="num">p@10</th><th class="num">p@20</th><th class="num">p@50</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>baseline (hand-written rule)</td><td class="num">0.820</td><td class="num">0.860</td><td class="num">0.856</td></tr>
+          <tr class="lead"><td>logistic regression</td><td class="num">0.960</td><td class="num">0.940</td><td class="num">0.860</td></tr>
+          <tr><td>random forest (named final model)</td><td class="num">0.780</td><td class="num">0.840</td><td class="num">0.860</td></tr>
+        </tbody>
+      </table>
+
+      <figure>
+        <img src="figures/results_vs_baseline.png" alt="Bar chart comparing precision at K=10, 20, 50 for the baseline, logistic regression, and random forest, against the base rate line at 0.5.">
+        <figcaption>Figure 1 — precision@K for each method against the 0.50 base rate, generated directly from the 5-fold cross-validation run.</figcaption>
+      </figure>
+
+      <p>
+        The chart is easy to over-read as a clean win, so here is the honest version. Every method separates risk from noise by a wide margin — all three sit 30 to 46 points above the coin-flip base rate at every K. That part of the result is solid.
+      </p>
+      <p>
+        The comparison the methodology promised — Random Forest beating logistic regression as the chosen final model — does not hold in this run. Logistic regression led at the tight, operationally relevant cutoffs (p@10 = 0.96 vs. 0.82 for the baseline and 0.78 for the Random Forest), and at p@50 the Random Forest edged the baseline by 0.004, which is not a result we're willing to call a win. We are reporting this as measured rather than reframing it, in line with the project's own honesty rules: a negative or flat result is still a result. The ranked queue in Section 7 is still built from the Random Forest's score, because that decision was made before this comparison ran — a caveat we return to explicitly in the Limitations and again in the recommendations themselves.
+      </p>
+      <div class="takeaway">takeaway: the model separates risk from noise clearly; it does not clearly separate itself from the baseline rule that took an afternoon to write.</div>
+    </section>
+
+    <section id="limitations">
+      <p class="sec-num">06 — limitations</p>
+      <h2>What this work cannot claim</h2>
+      <ul>
+        <li><strong>One month pair, one release.</strong> Trained and validated on March → April 2026 only. Not re-checked against any other month, or against the release's sealed final month.</li>
+        <li><strong>Pooled across 40 unevenly represented clients.</strong> History depth varies sharply by client; a single unusual client may not match the pooled pattern.</li>
+        <li><strong>March-only blind spot.</strong> A page that only starts declining in April is invisible to every feature here by construction.</li>
+        <li><strong>Reversion looks identical to real decline</strong> using March data alone — a page that dips and recovers on its own is indistinguishable, at the March cutoff, from one that keeps falling.</li>
+        <li><strong>The staleness feature is not a guaranteed clean as-of snapshot.</strong> Update timestamps that postdate the decision moment were checked for but treat this feature with the same caution.</li>
+        <li><strong>Not causal.</strong> Every result here is observed, directional, and decision-support: it describes a pattern in this slice, not a mechanism. No experiment behind this work tests whether acting on a flag changes the outcome.</li>
+        <li><strong>The four archetypes in Section 7 are descriptive labels for this month</strong>, not fixed personas — a page can and does move between them.</li>
+        <li><strong>The named final model doesn't clearly win.</strong> As Section 5 shows, choosing Random Forest over logistic regression was not supported by this run's own numbers. Anyone extending this work should re-open that choice rather than inherit it.</li>
+      </ul>
+    </section>
+
+    <section id="recommendations">
+      <p class="sec-num">07 — ranked recommendations</p>
+      <h2>The action playbook</h2>
+      <p>
+        Every page gets a model score, a descriptive archetype from a 4-cluster K-Means fit on volume, position momentum, and staleness, and a reason code that turns the score into one of four actions: <span class="pill pill-act">ACT_NOW</span> <span class="pill pill-queue">QUEUE_LATER</span> <span class="pill pill-watch">WATCH</span> <span class="pill pill-skip">SKIP</span>. At the current thresholds, <strong>3,241 pages</strong> land in <code class="field">ACT_NOW</code>.
+      </p>
+
+      <figure>
+        <img src="figures/archetype_mix_and_decline_rate.png" alt="Two bar charts: page counts per archetype, and April decline rate per archetype against the base rate.">
+        <figcaption>Figure 2 — left: how many pages fall in each archetype; right: each archetype's observed April decline rate against the 0.50 base rate.</figcaption>
+      </figure>
+
+      <p>The action ladder separates cleanly regardless of the model-vs-baseline result above — this is the part of the playbook we'd stand behind first:</p>
+      <div class="takeaway">SKIP-tier pages decline at 35–45%, below the panel's 50.4% base rate. ACT_NOW / QUEUE_LATER tiers decline at 82–89%, far above it. WATCH sits in between, at 65–69%.</div>
+
+      <table>
+        <caption>Table 2 — archetype × reason code, ranked by observed April decline rate</caption>
+        <thead>
+          <tr><th>archetype</th><th>reason code</th><th>action</th><th class="num">n</th><th class="num">decline rate</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Active Faller</td><td>high risk, high traffic</td><td><span class="pill pill-act">ACT_NOW</span></td><td class="num">700</td><td class="num">0.887</td></tr>
+          <tr><td>Fresh Riser</td><td>high risk, high traffic</td><td><span class="pill pill-act">ACT_NOW</span></td><td class="num">101</td><td class="num">0.861</td></tr>
+          <tr><td>Established Heavyweight</td><td>high risk, high traffic</td><td><span class="pill pill-act">ACT_NOW</span></td><td class="num">2,423</td><td class="num">0.855</td></tr>
+          <tr><td>Fresh Riser</td><td>high risk, low traffic</td><td><span class="pill pill-queue">QUEUE_LATER</span></td><td class="num">6,152</td><td class="num">0.852</td></tr>
+          <tr><td>Established Heavyweight</td><td>high risk, low traffic</td><td><span class="pill pill-queue">QUEUE_LATER</span></td><td class="num">236</td><td class="num">0.839</td></tr>
+          <tr><td>Active Faller</td><td>high risk, low traffic</td><td><span class="pill pill-queue">QUEUE_LATER</span></td><td class="num">1,727</td><td class="num">0.839</td></tr>
+          <tr><td>Stale Long-Tail</td><td>high risk, low traffic</td><td><span class="pill pill-queue">QUEUE_LATER</span></td><td class="num">298</td><td class="num">0.829</td></tr>
+          <tr><td><em>(unlabeled, small segment)</em></td><td>high risk, high traffic</td><td><span class="pill pill-act">ACT_NOW</span></td><td class="num">17</td><td class="num">0.824</td></tr>
+          <tr><td>Established Heavyweight</td><td>mild risk</td><td><span class="pill pill-watch">WATCH</span></td><td class="num">7,385</td><td class="num">0.692</td></tr>
+          <tr><td>Fresh Riser</td><td>mild risk</td><td><span class="pill pill-watch">WATCH</span></td><td class="num">9,702</td><td class="num">0.685</td></tr>
+          <tr><td>Active Faller</td><td>mild risk</td><td><span class="pill pill-watch">WATCH</span></td><td class="num">4,663</td><td class="num">0.685</td></tr>
+          <tr><td>Stale Long-Tail</td><td>mild risk</td><td><span class="pill pill-watch">WATCH</span></td><td class="num">1,558</td><td class="num">0.648</td></tr>
+          <tr><td>Active Faller</td><td>healthy</td><td><span class="pill pill-skip">SKIP</span></td><td class="num">12,711</td><td class="num">0.452</td></tr>
+          <tr><td>Fresh Riser</td><td>healthy</td><td><span class="pill pill-skip">SKIP</span></td><td class="num">28,906</td><td class="num">0.433</td></tr>
+          <tr><td>Stale Long-Tail</td><td>healthy</td><td><span class="pill pill-skip">SKIP</span></td><td class="num">11,706</td><td class="num">0.401</td></tr>
+          <tr><td>Established Heavyweight</td><td>healthy</td><td><span class="pill pill-skip">SKIP</span></td><td class="num">28,254</td><td class="num">0.351</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:14px;color:var(--ink-faint)">The unlabeled 17-row segment prints without an archetype name in the notebook's raw output; it's reproduced here exactly as generated rather than relabeled.</p>
+
+      <h3>How to use this tomorrow</h3>
+      <ol class="body-list">
+        <li><strong>Work ACT_NOW first.</strong> 3,241 pages combine a top-decile risk score with meaningful current traffic — the highest-cost pages to lose, and the tier with the highest observed decline rate.</li>
+        <li><strong>Let QUEUE_LATER wait.</strong> Same risk score, lower traffic — cheaper to defer than to review immediately.</li>
+        <li><strong>Spot-check WATCH, don't queue it.</strong> A mild-risk tier at 65–69% decline is still above base rate but well short of the top tier; a light periodic look is enough.</li>
+        <li><strong>Spend nothing on SKIP.</strong> Every SKIP-tier archetype declines below the panel's base rate — this is where a fixed review budget should <em>not</em> go.</li>
+        <li><strong>Explicit no-go:</strong> don't wire <code class="field">model_score</code> into an automated action, and don't treat the Random Forest as a proven upgrade over the baseline rule — Section 5 showed it isn't, cleanly, in this run.</li>
+      </ol>
+    </section>
+
+    <section id="reproducibility">
+      <p class="sec-num">08 — reproducibility</p>
+      <h2>Rerun this yourself</h2>
+      <dl class="repro-grid">
+        <div><dt>notebook</dt><dd><a href="https://github.com/hamidrazabajwa49/flyrank-ml-internship/blob/main/work/notebooks/capstone.ipynb">work/notebooks/capstone.ipynb</a></dd></div>
+        <div><dt>repo</dt><dd><a href="https://github.com/hamidrazabajwa49/flyrank-ml-internship">github.com/hamidrazabajwa49/flyrank-ml-internship</a></dd></div>
+        <div><dt>seed</dt><dd><code class="field">SEED = 42</code>, used for the train/test model fits and the K-Means clustering</dd></div>
+        <div><dt>validation</dt><dd><code class="field">GroupKFold(n_splits=5)</code> grouped by pseudonymous client ID</dd></div>
+        <div><dt>data access</dt><dd>DuckDB reading Parquet directly from <code class="field">hf://datasets/FlyRank/internship-warehouse</code> — no local download</dd></div>
+        <div><dt>source of truth</dt><dd><code class="field">work/outputs/paper_facts.json</code> — every number on this page traces back to that file</dd></div>
+      </dl>
+      <p>
+        Every figure and table above was generated top-to-bottom by the linked notebook in a single run — nothing here says anything the notebook didn't produce. Re-running requires a free, instantly-approved Hugging Face read token for the gated dataset; no other credentials are needed.
+      </p>
+    </section>
+
+    <section id="acknowledgments" class="ack">
+      <p class="sec-num">09 — acknowledgments</p>
+      <h2>Data credit</h2>
+      <p>
+        Built on the FlyRank ML Internship dataset — a pseudonymized, safe production search-data release used under the internship's data-use terms, with no client-identifying information reproduced anywhere in this paper or its source notebook.
+      </p>
+      <a class="credit" href="https://flyrank.ai">flyrank.ai →</a>
+    </section>
+
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    FlyRank ML Internship — AI/ML Track capstone. Claims throughout are observed, measured, and decision-support, not causal.
+  </div>
+</footer>
+
+</body>
+</html>
